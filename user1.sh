@@ -18,3 +18,4 @@ echo ${PASSWORD} | passwd --stdin ${USER_NAME}
 
 #Force password to change at first login
 passwd -e ${USER_NAME}
+
