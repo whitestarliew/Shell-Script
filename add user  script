@@ -1,0 +1,77 @@
+#!/bin/bash
+
+#Only superuser Priviledges
+#this script create a new user on the local system.
+#You must supply a username as an argument to the script
+#Optionally, you also can provide a comment for the account as argument.
+#A password will be automatically generated for the account.
+#The username ,password, and host for the account will be displayed
+
+#Make sure the script is being executed is being with superpriviledges 
+if [[ "${UID}" -ne 0 ]]
+then
+  echo "Please run sudo as a root user/admin"
+  exit 1
+fi
+
+#Enter new name
+read -p "Please enter your username: " USER_NAME
+
+#Make sure they supply at least 1 argument.
+if [["${NUMBER_OF_PARAMETER}" -lt 1 ]]
+then
+  echo "Usage ${0} USER_NAME[COMMENT]..."
+#Tell them that username is required , comment is optional
+  echo "Create an account on the local system with the name of USER_NAME and a comment field of comment" 
+  exit 1
+fi 
+#lt means less than 
+
+#First parameter is username
+USER_NAME="${1}"
+
+#rest of the parameter are for the account comments.
+#Nolonger need dollar sign $ 1 
+shift 
+COMMENT="${@}"
+#@is everything else .
+
+#Generate a password
+PASSWORD=$(date + %s%N | sha256sum |head -c48)
+
+#Create the user with the password
+useradd -c "${COMMENT}" -m ${USER_NAME}
+#-m means create the home directory 
+
+#Check for the return status 
+#We don't wnat to tell the user that an account was created when it hasn't been.
+if [[ "${?}" != 0 ]]
+then 
+  echo "The account could not be created."
+  exit 1
+fi
+#set the password on the account
+echo ${PASSWORD} | passwd --stdin ${USER_NAME}
+
+#Check to see if the passwd command  succeded or not
+if [[ "${?}" -ne 0 ]]
+then 
+  echo "Your password is not correct "
+  exit 1
+fi
+
+#force password change on first login
+passwd -e ${USER_NAME}
+
+#Display the username ,password,and the host where the user was created .
+echo
+echo "username: "
+echo "${USER_NAME}"
+echo
+echo "password: "
+echo "${PASSWORD}"
+echo
+echo "host: "
+echo "${HOSTNAME}"
+exit 0
+fi
