@@ -10,7 +10,7 @@
 #Make sure the script is being executed is being with superpriviledges 
 if [[ "${UID}" -ne 0 ]]
 then
-  echo "Please run sudo as a root user/admin"
+  echo "Please run sudo as a root user/admin,then should be work"
   exit 1
 fi
 
