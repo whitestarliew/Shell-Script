@@ -5,7 +5,7 @@
 #make sure the script is being executed with superuser priviledges
 if [[ "${UID}" != 0 ]]
 then
-  echo "Please run sudo as a root user/admin"
+  echo "Please go to sudo as a root user/admin"
   exit 1
 fi
 
