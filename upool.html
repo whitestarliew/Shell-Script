@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Cognito User Pool Demo</title>
+        <meta charset="UTF-8">
+    </head>
+    <body>
+        <script>
+            // On page load, parse user pool tokens from the URL
+            window.onload = function() {
+                tokens = getToken();
+                // Display tokens
+                if (tokens) {
+                    document.getElementById('id_token').value = tokens.id_token;
+                    document.getElementById('access_token').value = tokens.access_token;
+                }
+            }
+
+            // Parses the URL parameters and returns an object
+            function parseParms(str) {
+                var pieces = str.split("&"), data = {}, i, parts;
+                for (i = 0; i < pieces.length; i++) {
+                    parts = pieces[i].split("=");
+                    if (parts.length < 2) {
+                        parts.push("");
+                    }
+                    data[decodeURIComponent(parts[0])] = decodeURIComponent(parts[1]);
+                }
+                return data;
+            }
+
+            // Returns the token from the URL hash
+            function getToken() {
+                hash = parseParms(document.location.hash.substring(1));
+                return hash;
+            }
+        </script>
+
+        <div style="text-align: center">
+            <h2>Cognito User Pool Tokens</h2>
+            <div style="padding-top:20px; padding-bottom: 50px;">
+                <h3 style="margin-bottom: 30px">ID Token</h3>
+                <textarea id="id_token" rows="4" cols="150">
+                </textarea>
+
+                <h3 style="margin-bottom: 30px">Access Token</h3>
+                <textarea id="access_token" rows="4" cols="150">
+                </textarea>
+            </div>
+        </div>
+    </body>
+</html>
