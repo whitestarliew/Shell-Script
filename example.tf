@@ -1,94 +1,46 @@
-resource "aws_iam_policy" "user_pool_policy" {
-  name = "UserPoolPolicy"
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = [
-          "cognito-idp:CreateUserPool",
-          "cognito-idp:CreateUserPoolClient"
-        ],
-        Resource = "*",
-        Condition = {
-          StringEqualsIfExists = {
-            "aws:RequestedRegion" : "eu-west-2"
-          }
-        }
-      },
-      {
-        Effect   = "Allow",
-        Action   = [
-          "cognito-idp:AdminCreateUser"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
+Connecting Amazon EKS (Elastic Kubernetes Service) to an Amazon Cognito User Pool involves setting up OIDC (OpenID Connect) authentication. Here are the steps to connect EKS to a Cognito User Pool:
 
-resource "aws_iam_role" "michael_role" {
-  name = "MichaelRole"
+1. Create an OIDC Identity Provider:
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect    = "Allow",
-        Principal = {
-          AWS = "arn:aws:iam::YOUR_ACCOUNT_ID:user/michael"  # Replace with michael's user ARN
-        },
-        Action    = "sts:AssumeRole"
-      }
-    ]
-  })
-}
+Sign in to the AWS Management Console.
+Open the Amazon EKS console at https://console.aws.amazon.com/eks/.
+Choose your cluster.
+In the navigation pane, choose "Configuration."
+In the "Identity providers" section, choose "Add identity provider."
+For "Provider URL," use the OIDC issuer URL of your Cognito User Pool. This URL follows the format https://cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>. Replace <region> and <YOUR_USER_POOL_ID> with your specific values.
+For "Audience," use the App client ID of your Cognito User Pool app client.
+Choose "Add identity provider."
+2. Configure RBAC (Role-Based Access Control):
 
-resource "aws_iam_role_policy_attachment" "user_pool_attachment" {
-  policy_arn = aws_iam_policy.user_pool_policy.arn
-  role       = aws_iam_role.michael_role.name
-}
-=======================================================================
+Create an IAM OIDC identity provider for your cluster:
 
-Lambda 
+ruby
+Copy code
+aws eks create-cluster --name my-cluster-name --role-arn arn:aws:iam::123456789012:role/my-cluster-role --resources-vpc-config subnetIds=subnet-abc12345,securityGroupIds=sg-abc12345 --enable-oidc
+Replace my-cluster-name with your EKS cluster name, arn:aws:iam::123456789012:role/my-cluster-role with the role ARN that you want to associate with your cluster, and subnet-abc12345 and sg-abc12345 with your VPC's subnet and security group.
 
-resource "aws_iam_role" "lambda_execution_role" {
-  name = "LambdaExecutionRole"
+Associate the OIDC identity provider with a Kubernetes service account:
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect    = "Allow",
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        },
-        Action    = "sts:AssumeRole"
-      }
-    ]
-  })
-}
+arduino
+Copy code
+eksctl create iamserviceaccount --name my-service-account --namespace my-namespace --cluster my-cluster-name --attach-policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess --approve
+Replace my-service-account, my-namespace, and my-cluster-name with your service account, namespace, and cluster names.
 
-resource "aws_iam_policy" "lambda_policy" {
-  name = "LambdaPolicy"
+3. Update Your Kubernetes Configuration:
 
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = [
-          "cognito-idp:AdminCreateUser",
-          "cognito-idp:AdminGetUser"
-        ],
-        Resource = "*"
-      }
-    ]
-  })
-}
+In your Kubernetes deployment manifest, configure the oidc section of the kubeconfig file with the OIDC issuer URL and the client ID from your Cognito User Pool app client.
 
-resource "aws_iam_role_policy_attachment" "lambda_policy_attachment" {
-  policy_arn = aws_iam_policy.lambda_policy.arn
-  role       = aws_iam_role.lambda_execution_role.name
-}
+An example configuration looks like this:
+
+yaml
+Copy code
+oidc:
+  issuer-url: https://cognito-idp.<region>.amazonaws.com/<YOUR_USER_POOL_ID>
+  client-id: <YOUR_APP_CLIENT_ID>
+4. Deploy and Test:
+
+Deploy your application to EKS.
+When users access your application, they'll be prompted to authenticate via your Cognito User Pool.
+Your Kubernetes workloads can use the OIDC identity provider to verify user identities and permissions.
+Please replace placeholders like <region>, <YOUR_USER_POOL_ID>, and <YOUR_APP_CLIENT_ID> with your actual values. This process establishes a trust relationship between EKS and your Cognito User Pool, allowing EKS to authenticate users using Cognito's OIDC capabilities.
