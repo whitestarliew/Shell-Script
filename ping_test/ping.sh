@@ -8,12 +8,10 @@ output_file="C:\{yourpath}"
 
 # Function to perform the ping test and save results
 function ping_and_log() {
-  echo "$(date) - Pinging $target..." >> "$output_file"
-  
-  # ping "$target" >> "$output_file" 2>&1
-  echo "" >> "$output_file"  # Add a blank line for readability
+   echo "$(date) - Pinging $target..." >> "$output_file"
+    ping "$target" | tail -1 >> "$output_file"
+  echo "" >> "$output_file" 
 }
-
 # Run the test initially
 ping_and_log
 
